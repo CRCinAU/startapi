@@ -40,3 +40,9 @@ To validate a domain, run *./validate_domain.pl yourdomain.com*.
 To create a certificate after validation, run *./create_certificate.pl www.yourdomain.com*.
 
 To retrieve a certificate previously issued or in a Pending status, use *./retrieve_certificate.pl orderID*.
+
+### Getting real certs
+
+Once you have everything working, you can change the URI in config.xml from *https://apitest.startssl.com* to *https://api.startssl.com* to get proper 1 year length certs.
+
+Using *https://apitest.startssl.com*, the generated certificates are only valid for 24 hours however the daily limits are greatly increased to allow testing.
