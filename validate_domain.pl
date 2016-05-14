@@ -26,7 +26,7 @@ foreach my $node ( keys $xml->{domains}{domain} ) {
 }
 
 if ( !$domain ) {
-	print "No match found. Add to certificates.xml\n";
+	print "No domain match found. Add to config.xml\n";
 	exit 1;
 }
 
