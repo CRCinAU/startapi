@@ -6,9 +6,17 @@ A perl implementation of [StartAPI](https://www.startssl.com/StartAPI) certifica
 
 1) Log into StartSSL and create a new "Email Validation" for use with the API.
 
-2) Select the certificate in the [Start API Settings](https://startssl.com/StartAPI/ApplyPart).
+2) Ensure that you convert the new .p12 certificate into CRT / KEY and remove any passphrase associated with it.
 
-3) Generate a API Token for use in config.xml
+This is done via:
+```
+openssl pkcs12 -in filename.p12 -nocerts -out filename.key
+openssl pkcs12 -in filename.p12 -clcerts -nokeys -out filename.crt 
+```
+
+3) Select the certificate in the [Start API Settings](https://startssl.com/StartAPI/ApplyPart).
+
+4) Generate a API Token for use in config.xml
 
 ### Configuration
 
@@ -16,13 +24,13 @@ A perl implementation of [StartAPI](https://www.startssl.com/StartAPI) certifica
 
 2) Add your domains for validation to config.xml
 
-The <name> element should contain the root domain name to be validated.
+The *name* element should contain the root domain name to be validated.
 
-<validatehost> should be the server that hosts a web site at http://yourdomain.com. The scripts will connect to this via SSH to copy the validation information to a file at http://yourdomain.com/yourdomain.com.html. You should set up this host in *~/.ssh/config* to allow automated connections to it.
+*validatehost* should be the server that hosts a web site at http://yourdomain.com. The scripts will connect to this via SSH to copy the validation information to a file at http://yourdomain.com/yourdomain.com.html. You should set up this host in *~/.ssh/config* to allow automated connections to it.
 
-<validatepath> should point to the document root of http://yourdomain.com
+*validatepath* should point to the document root of http://yourdomain.com
 
-You can add multiple domains to this file with multiple <domain> elements.
+You can add multiple domains to this file with multiple *domain* elements.
 
 ### Usage
 
