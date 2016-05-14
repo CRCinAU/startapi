@@ -10,8 +10,9 @@ A perl implementation of [StartAPI](https://www.startssl.com/StartAPI) certifica
 
 This is done via:
 ```
-openssl pkcs12 -in filename.p12 -nocerts -out filename.key
-openssl pkcs12 -in filename.p12 -clcerts -nokeys -out filename.crt 
+openssl pkcs12 -in cert.p12 -clcerts -nokeys -out cert.crt 
+openssl pkcs12 -in cert.p12 -nocerts -out cert.protected.key
+openssl rsa -in cert.protected.key -out cert.key
 ```
 
 3) Select the certificate in the [Start API Settings](https://startssl.com/StartAPI/ApplyPart).
