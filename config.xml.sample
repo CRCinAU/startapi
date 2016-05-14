@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='us-ascii'?>
+<StartAPI>
+<config>
+	<SSLCert>path/to/user.crt</SSLCert>
+	<SSLKey>path/to/user.key</SSLKey>
+	<Token>your_startapi_token</Token>
+	<URI>https://apitest.startssl.com</URI>
+</config>
+<domains>
+	<domain>
+		<name>mydomain.com</name>
+		<validatehost>www.mydomain.com</validatehost>
+		<validatepath>/path/to/mydomain.com/htdocs/</validatepath>
+	</domain>
+</domains>
+</StartAPI>
