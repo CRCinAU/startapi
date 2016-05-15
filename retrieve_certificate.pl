@@ -33,7 +33,9 @@ my $body = "";
 my $headers = "";
 my @bad_headers = ('Expect:');
 my $curl = WWW::Curl::Easy->new;
-#$curl->setopt(CURLOPT_VERBOSE, 1);
+if ( $xml->{config}->{Verbose} ) {
+	$curl->setopt(CURLOPT_VERBOSE, 1);
+}
 $curl->setopt(CURLOPT_SSLCERT, "./" . $xml->{config}->{SSLCert});
 $curl->setopt(CURLOPT_SSLKEY, "./" . $xml->{config}->{SSLKey});
 $curl->setopt(CURLOPT_URL, $xml->{config}->{URI});

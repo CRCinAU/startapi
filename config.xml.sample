@@ -5,6 +5,7 @@
 	<SSLKey>path/to/user.key</SSLKey>
 	<Token>your_startapi_token</Token>
 	<URI>https://apitest.startssl.com</URI>
+	<Verbose>0</Verbose>
 </config>
 <domains>
 	<domain>
