@@ -13,21 +13,17 @@ if ( @ARGV != 1 ) {
 	exit 1;
 }
 
-our ( $domain, $validatepath, $validatehost );
+my $domain = $ARGV[0];
+my $validatehost = "";
+my $validatepath = "";
 
 ## Find the host to validate....
 foreach my $node ( keys $xml->{domains}{domain} ) {
 	if ( $node eq $ARGV[0] ) {
-		$domain = $node;
 		$validatehost = $xml->{domains}{domain}{$node}{validatehost};
 		$validatepath = $xml->{domains}{domain}{$node}{validatepath};
 		last;
 	}
-}
-
-if ( !$domain ) {
-	print "No domain match found. Add to config.xml\n";
-	exit 1;
 }
 
 my $json = 'RequestData={
@@ -63,12 +59,20 @@ if ( $errorcode != 0 ) {
 $body =~ /"data": "(.+)"/;
 my $data = $1;
 
-print "Data: $data\n";
-
-## Create the validation file on the server.
-print "Sending validation string to server: $validatehost...\n";
-my $ssh = Net::OpenSSH->new($validatehost) or die "ERROR: Unable to connect " . $!;
-$ssh->system("echo \"$data\" > $validatepath$domain.html");
+if ( $validatehost eq "" ) {
+	print "No validatehost specified. Reverting to manual validation.\n\n";
+	print "To continue, log into the host serving your web site for $domain and create a file $domain.html\n\n";
+	print "This file should be available at http://$domain/$domain.html\n\n";
+	print "The file should contain the string: $data\n\n";
+	print "When done, press Enter to continue (or Ctrl+C to abort):\n";
+	local( $| ) = ( 1 );
+	my $waitforuseraction = <STDIN>;
+} else {
+	## Create the validation file on the server.
+	print "Sending validation string to server: $validatehost...\n";
+	my $ssh = Net::OpenSSH->new($validatehost) or die "ERROR: Unable to connect " . $!;
+	$ssh->system("echo \"$data\" > $validatepath$domain.html");
+}
 
 print "Validating with StartSSL...\n";
 $body = "";
@@ -83,5 +87,3 @@ $curl->setopt(CURLOPT_POSTFIELDS, $json);
 $curl->perform();
 
 print "Status:\n$body\n";
-
-$ssh->system("echo > $validatepath$domain.html");
