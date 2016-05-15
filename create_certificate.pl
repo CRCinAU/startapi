@@ -21,7 +21,21 @@ if ( !-d "certificates" ) {
 
 ## Generate the CSR...
 my $date = strftime '%Y-%m-%d', localtime;
-`openssl req -new -newkey rsa:4096 -sha512 -nodes -out certificates/$hostname.csr -keyout certificates/$hostname.key -subj "/CN=$hostname"`;
+
+## Check if CSR already exists.
+if ( -f "certificates/$hostname.csr" ) {
+	## Prompt to use existing CSR if it exists. Some hardware devices generate their own CSRs.
+	print "A CSR for $hostname already exists in ./certificates/.\n\nDo you want to use this CSR? (Y/N): ";
+	chomp(my $answer = <STDIN>);
+	if ( lc($answer) eq "n" ) {
+		## Remove the old CSR so we create a new one in the next step.
+		unlink "certificates/$hostname.csr";
+	}
+}
+
+if ( !-f "certificates/$hostname.csr" ) {
+	`openssl req -new -newkey rsa:4096 -sha512 -nodes -out certificates/$hostname.csr -keyout certificates/$hostname.key -subj "/CN=$hostname"`;
+}
 
 open my $csr_file, "<", "certificates/$hostname.csr";
 my $csr = do { local $/; <$csr_file>; };
@@ -78,6 +92,7 @@ Date:			$date
 Order ID:		$orderID
 Order Number:		$orderNo
 Order Status:		$orderStatus
+Obtained from:		$xml->{config}->{URI}
 EOF
 
 print "\nSaved order details to: certificates/$hostname.log\n\n";
