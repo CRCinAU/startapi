@@ -4,6 +4,8 @@ use warnings;
 use parent 'Exporter';
 use WWW::Curl::Easy;
 use XML::Simple;
+use IPC::Open3;
+use Data::Dumper;
 
 our $xml = XMLin('config.xml');
 our @EXPORT = qw($xml);
@@ -34,4 +36,28 @@ sub libcurl_post($) {
 	$return{headers} = $headers;
 
 	return %return;
+}
+
+sub get_cert_info($) {
+	my $cert = shift;
+	my %cert_info;
+
+        my $cmd = "/usr/bin/openssl";
+        my @args = qw(x509 -noout -text);
+        my $pid =  open3(\*WRITER, \*READER, 0, $cmd, @args);
+        print WRITER $cert;
+        close WRITER;
+
+        my $openssl = do { local $/; <READER>; };
+
+        $openssl =~ /Not After : (.*)/;
+	$cert_info{expires} = $1;
+
+	$openssl =~ /Not Before: (.*)/;
+	$cert_info{begins} = $1;
+
+	$openssl =~ /DNS:(.*)/;
+	$cert_info{hostname} = $1;
+
+        return %cert_info;
 }

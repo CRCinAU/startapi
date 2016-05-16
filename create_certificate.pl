@@ -89,6 +89,18 @@ elsif ( $orderStatus eq "1" ) {
 }
 elsif ( $orderStatus eq "2" ) {
 	print "Order Status:			Issued.\n\n";
+
+	## Print the certificate to file.
+	$results{body} =~ /"certificate": "(.+)",/;
+	my $certificate = decode_base64($1);
+	$results{body} =~ /"intermediateCertificate": "(.+)",/;
+	my $intermediatecertificate = decode_base64($1);
+
+	## Get the cert info...
+	my %cert_info = functions::get_cert_info($certificate);
+	print $LOG "Cert Begins:            $cert_info{begins}\n";
+	print $LOG "Cert Expires:           $cert_info{expires}\n";
+
 	if ( $results{body} =~ /"certificateFieldMD5": "(.+)",/ ) {
 		print $LOG "Certificate MD5:	$1\n";
 	}
@@ -96,25 +108,20 @@ elsif ( $orderStatus eq "2" ) {
 		print $LOG "Intermediate MD5:	$1\n";
 	}
 
-	## Print the certificate to file.
-	$results{body} =~ /"certificate": "(.+)",/;
-	my $certificate = $1;
-	$results{body} =~ /"intermediateCertificate": "(.+)",/;
-	my $intermediatecertificate = $1;
-
+	## Write the certificate to disk.
 	open my $CERT, ">", "certificates/$hostname.crt" or die "Unable to write certificate: $!\n";
-	print $CERT decode_base64($certificate);
+	print $CERT $certificate;
 	close $CERT;
 
 	## Print the intermediate to file,
 	open $CERT, ">", "certificates/$hostname-intermediate.crt" or die "Unable to write certificate: $!\n";
-	print $CERT decode_base64($intermediatecertificate);
+	print $CERT $intermediatecertificate;
 	close $CERT;
 
 	## Write out the combined PEM.
 	open $CERT, ">", "certificates/$hostname.pem" or die "Unable to write certificate: $!\n";
-	print $CERT decode_base64($certificate);
-	print $CERT decode_base64($intermediatecertificate);
+	print $CERT $certificate;
+	print $CERT $intermediatecertificate;
 	close $CERT;
 
 	## Get the expiry date of the certificate.

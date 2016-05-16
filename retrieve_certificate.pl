@@ -62,17 +62,9 @@ elsif ( $orderStatus eq "2" ) {
 	my $intermediatecertificate = decode_base64($1);
 
 	## Get the hostname for the certificate.
-	my $cmd = "/usr/bin/openssl";
-	my @args = qw(x509 -noout -subject);
-	my $pid =  open3(\*WRITER, \*READER, 0, $cmd, @args);
-	print WRITER $certificate;
-	close WRITER;
+	my %cert_info = functions::get_cert_info($certificate);
 
-	my $subject = do { local $/; <READER>; };
-	$subject =~ /CN=(.*)$/;
-	my $hostname = $1;
-
-	open my $LOG, ">>", "certificates/$hostname.log" or die "Unable to open log file: $!\n";
+	open my $LOG, ">>", "certificates/$cert_info{hostname}.log" or die "Unable to open log file: $!\n";
 	print $LOG <<EOF;
 ====== StartSSL Certificate Log ======
 Retrieve Certificate Results:
@@ -80,6 +72,9 @@ Date:			$date
 Order ID:		$orderID
 Order Number:		$orderNo
 Order Status:		$orderStatus
+Obtained from:          $xml->{config}->{URI}
+Cert Begins:		$cert_info{begins}
+Cert Expires:		$cert_info{expires}
 EOF
 
 	if ( $results{body} =~ /"certificateFieldMD5": "(.+)",/ ) {
@@ -92,25 +87,25 @@ EOF
 	close $LOG;
 
 	## Print the certificate to file.
-	open my $CERT, ">", "certificates/$hostname.crt" or die "Unable to write certificate: $!\n";
+	open my $CERT, ">", "certificates/$cert_info{hostname}.crt" or die "Unable to write certificate: $!\n";
 	print $CERT $certificate;
 	close $CERT;
 
 	## Print the intermediate to file.
-	open $CERT, ">", "certificates/$hostname-intermediate.crt" or die "Unable to write certificate: $!\n";
+	open $CERT, ">", "certificates/$cert_info{hostname}-intermediate.crt" or die "Unable to write certificate: $!\n";
 	print $CERT $intermediatecertificate;
 	close $CERT;
 
 	## Print the combined PEM.
-	open $CERT, ">", "certificates/$hostname.pem" or die "Unable to write certificate: $!\n";
+	open $CERT, ">", "certificates/$cert_info{hostname}.pem" or die "Unable to write certificate: $!\n";
 	print $CERT $certificate;
 	print $CERT $intermediatecertificate;
 	close $CERT;
 	
-	print "Saved order details to:		certificates/$hostname.log\n";
-	print "Wrote Certificate to:		certificates/$hostname.crt\n";
-	print "Wrote Intermediate Cert to:	certificates/$hostname-intermediate.crt\n";
-	print "Wrote combined PEM Cert to:	certificates/$hostname.pem\n";
+	print "Saved order details to:		certificates/$cert_info{hostname}.log\n";
+	print "Wrote Certificate to:		certificates/$cert_info{hostname}.crt\n";
+	print "Wrote Intermediate Cert to:	certificates/$cert_info{hostname}-intermediate.crt\n";
+	print "Wrote combined PEM Cert to:	certificates/$cert_info{hostname}.pem\n";
 	
 }
 
