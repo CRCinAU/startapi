@@ -1,8 +1,8 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use WWW::Curl::Easy;
-use XML::Simple;
+use lib ".";
+use functions;
 use POSIX 'strftime';
 use URI::Escape;
 use MIME::Base64;
@@ -13,7 +13,6 @@ if ( @ARGV != 1 ) {
 }
 
 my $hostname = $ARGV[0];
-my $xml = XMLin('config.xml');
 
 if ( !-d "certificates" ) {
 	mkdir "certificates";
@@ -51,38 +50,23 @@ my $json = 'RequestData={
 }';
 
 print "Submitting CSR...\n";
-my $body = "";
-my $headers = "";
-my @bad_headers = ('Expect:');
-my $curl = WWW::Curl::Easy->new;
-if ( $xml->{config}->{Verbose} ) {
-        $curl->setopt(CURLOPT_VERBOSE, 1);
-}
-$curl->setopt(CURLOPT_SSLCERT, "./" . $xml->{config}->{SSLCert});
-$curl->setopt(CURLOPT_SSLKEY, "./" . $xml->{config}->{SSLKey});
-$curl->setopt(CURLOPT_URL, $xml->{config}->{URI});
-$curl->setopt(CURLOPT_POST, 1);
-$curl->setopt(CURLOPT_POSTFIELDS, $json);
-$curl->setopt(CURLOPT_WRITEHEADER, \$headers );
-$curl->setopt(CURLOPT_FILE, \$body);
-$curl->setopt(CURLOPT_HTTPHEADER, \@bad_headers );
-$curl->perform();
+my %results = functions::libcurl_post($json);
 
-$body =~ /"errorCode": (.+),/;
+$results{body} =~ /"errorCode": (.+),/;
 my $errorcode = $1;
 if ( $errorcode != 0 ) {
-	$body =~ /"shortMsg": "(.+)"/;
+	$results{body} =~ /"shortMsg": "(.+)"/;
 	print "Received Error Code: $errorcode - $1\n\n";
 	exit 1;
 }
 
-$body =~ /"orderStatus": (.+),/;
+$results{body} =~ /"orderStatus": (.+),/;
 my $orderStatus = $1;
 
-$body =~ /"orderID": "(.+)",/;
+$results{body} =~ /"orderID": "(.+)",/;
 my $orderID = $1;
 
-$body =~ /"orderNo": "(.+)",/;
+$results{body} =~ /"orderNo": "(.+)",/;
 my $orderNo = $1;
 
 open my $LOG, ">>", "certificates/$hostname.log" or die "Unable to open log file: $!\n";
@@ -105,17 +89,17 @@ elsif ( $orderStatus eq "1" ) {
 }
 elsif ( $orderStatus eq "2" ) {
 	print "Order Status:			Issued.\n\n";
-	if ( $body =~ /"certificateFieldMD5": "(.+)",/ ) {
+	if ( $results{body} =~ /"certificateFieldMD5": "(.+)",/ ) {
 		print $LOG "Certificate MD5:	$1\n";
 	}
-	if ( $body =~ /"intermediateCertificateFieldMD5": "(.+)"/ ) {
+	if ( $results{body} =~ /"intermediateCertificateFieldMD5": "(.+)"/ ) {
 		print $LOG "Intermediate MD5:	$1\n";
 	}
 
 	## Print the certificate to file.
-	$body =~ /"certificate": "(.+)",/;
+	$results{body} =~ /"certificate": "(.+)",/;
 	my $certificate = $1;
-	$body =~ /"intermediateCertificate": "(.+)",/;
+	$results{body} =~ /"intermediateCertificate": "(.+)",/;
 	my $intermediatecertificate = $1;
 
 	open my $CERT, ">", "certificates/$hostname.crt" or die "Unable to write certificate: $!\n";
@@ -132,6 +116,8 @@ elsif ( $orderStatus eq "2" ) {
 	print $CERT decode_base64($certificate);
 	print $CERT decode_base64($intermediatecertificate);
 	close $CERT;
+
+	## Get the expiry date of the certificate.
 	
 	print "Wrote Certificate to:		certificates/$hostname.crt\n";
 	print "Wrote Intermediate Cert to:	certificates/$hostname-intermediate.crt\n";

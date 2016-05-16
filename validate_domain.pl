@@ -1,12 +1,10 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use WWW::Curl::Easy;
-use XML::Simple;
+use lib ".";
+use functions;
 use Net::OpenSSH;
 use Data::Dumper;
-
-my $xml = XMLin('config.xml');
 
 if ( @ARGV != 1 ) {
 	print "Usage: $0 <fqdn>\n";
@@ -33,30 +31,17 @@ my $json = 'RequestData={
 }';
 
 print "Getting validation string...\n";
-my $body = "";
-my $headers = "";
-my $curl = WWW::Curl::Easy->new;
-if ( $xml->{config}->{Verbose} ) {
-	$curl->setopt(CURLOPT_VERBOSE, 1);
-}
-$curl->setopt(CURLOPT_SSLCERT, "./" . $xml->{config}->{SSLCert});
-$curl->setopt(CURLOPT_SSLKEY, "./" . $xml->{config}->{SSLKey});
-$curl->setopt(CURLOPT_URL, $xml->{config}->{URI});
-$curl->setopt(CURLOPT_POST, 1);
-$curl->setopt(CURLOPT_POSTFIELDS, $json);
-$curl->setopt(CURLOPT_WRITEHEADER, \$headers );
-$curl->setopt(CURLOPT_FILE, \$body);
-$curl->perform();
+my %results = functions::libcurl_post($json);
 
-$body =~ /"errorCode": (.+),/;
+$results{body} =~ /"errorCode": (.+),/;
 my $errorcode = $1;
 if ( $errorcode != 0 ) {
-	$body =~ /"shortMsg": "(.+)"/;
+	$results{body} =~ /"shortMsg": "(.+)"/;
 	print "Received Error Code: $errorcode - $1\n\n";
 	exit 1;
 }
 
-$body =~ /"data": "(.+)"/;
+$results{body} =~ /"data": "(.+)"/;
 my $data = $1;
 
 if ( $validatehost eq "" ) {
@@ -75,15 +60,12 @@ if ( $validatehost eq "" ) {
 }
 
 print "Validating with StartSSL...\n";
-$body = "";
-$headers = "";
 $json = 'RequestData={
 	"tokenID": "' . $xml->{config}->{Token} . '",
         "actionType" : "WebControlValidation",
 	"hostname": "' . $domain . '"
 }';
 
-$curl->setopt(CURLOPT_POSTFIELDS, $json);
-$curl->perform();
+%results = functions::libcurl_post($json);
 
-print "Status:\n$body\n";
+print "Status:\n$results{body}\n";
