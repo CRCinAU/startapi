@@ -33,6 +33,8 @@ The *name* element should contain the root domain name to be validated.
 
 You can add multiple domains to this file with multiple *domain* elements.
 
+If a domain is provided that is NOT listed in config.xml, then a manual validation process will be done via prompts.
+
 ### Usage
 
 To validate a domain, run *./validate_domain.pl yourdomain.com*.
