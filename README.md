@@ -35,6 +35,8 @@ You can add multiple domains to this file with multiple *domain* elements.
 
 If a domain is provided that is NOT listed in config.xml, then a manual validation process will be done via prompts.
 
+3) If you wish to use the deployment script, copy deployment.xml.sample to deployment.xml. Fill in the details as per the example.
+
 ### Usage
 
 To validate a domain, run *./validate_domain.pl yourdomain.com*.
@@ -42,6 +44,8 @@ To validate a domain, run *./validate_domain.pl yourdomain.com*.
 To create a certificate after validation, run *./create_certificate.pl www.yourdomain.com*.
 
 To retrieve a certificate previously issued or in a Pending status, use *./retrieve_certificate.pl orderID*.
+
+To deploy a certificate, use *./deploy_certificate www.yourdomain.com*.
 
 ### Getting real certs
 
