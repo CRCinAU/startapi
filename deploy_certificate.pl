@@ -1,0 +1,88 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Net::OpenSSH;
+use Data::Dumper;
+use XML::Simple;
+
+if ( @ARGV != 1 ) {
+	print "Usage: $0 <fqdn>\n";
+	exit 1;
+}
+
+my $xml = XMLin("deployment.xml", SuppressEmpty => '');
+
+my $domain = $ARGV[0];
+my ($name, $host, $pem, $cert, $key, $intermediate, $execute);
+
+## Find the host to validate....
+foreach my $node ( $xml->{domains}->{domain} ) {
+	if ( $node->{name} eq $ARGV[0] ) {
+		$name		= $node->{name};
+		$host		= $node->{host};
+		$pem		= $node->{pem};
+		$cert		= $node->{cert};
+		$key		= $node->{key};
+		$intermediate	= $node->{intermediate};
+		$execute	= $node->{execute};
+		last;
+	}
+}
+
+print "Domain Name: $name\nHost: $host\nPEM File: $pem\nCert File: $cert\nKey File: $key\nIntermediate: $intermediate\n\n";
+
+## Load the certificates.
+print "Loading certificates...\n";
+my %certificates;
+my $errors = 0;
+foreach my $file ( "$name.key", "$name.pem", "$name.crt", "$name-intermediate.crt" ) {
+	if ( -f "certificates/$file" ) {
+		open ( my $fh, "<", "certificates/$file" ) or die "Unable to open $file: $!\n";
+		$certificates{$file} = do { local $/; <$fh>; };
+	} else {
+		print "File certificates/$file does not exist!\n";
+		$errors++;
+	}
+}
+
+if ( $errors ) {
+	print "\nToo many errors. Aborting...\n";
+	exit 1;
+}
+
+print "Connecting to $host...";
+my $ssh = Net::OpenSSH->new($host) or die " Unable to connect " . $! . "\n";
+print " Connected!\n";
+
+if ( $key ) {
+	print "Installing Private Key...";
+	$ssh->scp_put("certificates/$name.key", $key);
+	print "Done.\n";
+}
+
+if ( $cert ) {
+	print "Installing Certificate...";
+	$ssh->scp_put("certificates/$name.crt", $cert);
+	print "Done.\n";
+}
+
+if ( $pem ) {
+	print "Installing PEM Certificate...";
+	$ssh->scp_put("certificates/$name.pem", $pem);
+	print "Done.\n";
+}
+
+if ( $intermediate ) {
+	print "Installing intermediate cert...";
+	$ssh->scp_put("certificates/$name-intermediate.crt", $intermediate);
+	print "Done.\n";
+}
+
+if ( $execute ) {
+	print "Running post-installation command...";
+	$ssh->system($execute);
+	print "Done.\n";
+}
+
+print "Certificates installed!\n";
+

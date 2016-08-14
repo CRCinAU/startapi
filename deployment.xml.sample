@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='us-ascii'?>
+<StartAPI>
+<domains>
+	<domain>
+		<name>www.mydomain.org</name>
+		<host>some.webhost.com</host>
+		<pem></pem>
+		<cert>/etc/httpd/www.mydomain.org.crt</cert>
+		<key>/etc/httpd/www.mydomain.org.key</key>
+		<intermediate>/etc/httpd/sub.class1.server.ca.pem</intermediate>
+		<execute>sudo systemctl restart httpd</execute>
+	</domain>
+</domains>
+</StartAPI>

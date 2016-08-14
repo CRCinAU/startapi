@@ -7,7 +7,7 @@ use XML::Simple;
 use IPC::Open3;
 use Data::Dumper;
 
-our $xml = XMLin('config.xml');
+our $xml = XMLin('config.xml', SuppressEmpty => '');
 our @EXPORT = qw($xml);
 
 sub libcurl_post($) {
