@@ -10,14 +10,14 @@ if ( @ARGV != 1 ) {
 	exit 1;
 }
 
-my $xml = XMLin("deployment.xml", SuppressEmpty => '');
+my $xml = XMLin("deployment.xml", SuppressEmpty => '', KeyAttr => {} );
 
 my $domain = $ARGV[0];
 my ($name, $host, $pem, $cert, $key, $intermediate, $execute);
 
 ## Find the host to validate....
-foreach my $node ( $xml->{domains}->{domain} ) {
-	if ( $node->{name} eq $ARGV[0] ) {
+foreach my $node ( @{ $xml->{domains}->{domain} } ) {
+	if ( $node->{name} eq $domain ) {
 		$name		= $node->{name};
 		$host		= $node->{host};
 		$pem		= $node->{pem};
@@ -27,6 +27,10 @@ foreach my $node ( $xml->{domains}->{domain} ) {
 		$execute	= $node->{execute};
 		last;
 	}
+}
+if ( !$host ) {
+	print "No host found for $domain\n";
+	exit 1;
 }
 
 print "Domain Name: $name\nHost: $host\nPEM File: $pem\nCert File: $cert\nKey File: $key\nIntermediate: $intermediate\n\n";
