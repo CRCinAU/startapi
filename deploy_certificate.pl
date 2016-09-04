@@ -83,7 +83,7 @@ if ( $cert ) {
 if ( $pem ) {
 	print "Installing PEM Certificate...";
 	$ssh->scp_put("certificates/$name.pem", $pem);
-	print $LOG "PEM file:\t$pem\n";
+	print $LOG "PEM file:\t\t$pem\n";
 	print "Done.\n";
 }
 
@@ -98,7 +98,7 @@ if ( $execute ) {
 	print "Running post-installation command...";
 	print $LOG "\nRunning post-install command:\n\t\t$execute\n";
 	my $result = $ssh->capture($execute);
-	print $LOG "Post-install results:\n\t\t$result\n";
+	print $LOG "Post-install results:\n$result\n";
 	print "Done.\n";
 }
 
